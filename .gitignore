@@ -1,0 +1,8 @@
+game/
+out/
+tmp/
+_tools/logs/
+dash/
+generated/*
+!generated/rexglue.cmake
+xconfig.toml

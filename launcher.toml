@@ -1,0 +1,37 @@
+# Blade launcher registry: recomps shown in Games > Demos.
+#
+#   [title.<id>]          id: what the dashboard hands back on launch (<= 42 chars)
+#   name     = "..."      shown in the list
+#   title_id = 0x...      optional
+#   exe      = "..."      the recomp's executable (relative paths: from this file)
+#   args     = [...]      its arguments; these mirror what `rex run` passes
+#   cwd      = "..."      optional, default this file's folder (relative args resolve from it)
+#
+# The game runs in place of the dashboard; when it exits, the dashboard comes back.
+
+[title.ridge]
+name = "Ridge Racer 6"
+title_id = 0x4E4D07D3
+exe = "../Ridge/out/build/linux-amd64-relwithdebinfo/ridge"
+args = ["--game_data_root", "../Ridge/game", "--gpu_plugin", "xenos",
+        "--present_on_guest_swap=true"]
+
+[title.crash]
+name = "Burnout Crash!"
+title_id = 0x58410B5D
+exe = "../Crash/out/build/linux-amd64-relwithdebinfo/crash"
+args = ["--game_data_root", "../Crash/game", "--gpu_plugin", "xenos",
+        "--present_on_guest_swap=true"]
+
+[title.london]
+name = "London 2012"
+title_id = 0x53450843
+exe = "../London/out/build/linux-amd64-relwithdebinfo/london"
+args = ["--game_data_root", "../London/game", "--gpu_plugin", "xenos",
+        "--present_on_guest_swap=true"]
+
+[title.tokyo]
+name = "Tokyo Xtreme Racer"
+exe = "../Tokyo/out/build/linux-amd64-relwithdebinfo/tokyo"
+args = ["--game_data_root", "../Tokyo/game", "--gpu_plugin", "xenos",
+        "--present_on_guest_swap=true"]

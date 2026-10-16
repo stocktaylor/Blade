@@ -1,0 +1,60 @@
+# Blade dashboard text overrides (see src/blade_strings.cpp).
+#
+#   [en]                          English: replaces this text in every scene
+#   "Original" = "Replacement"
+#   [de-de]                       a translation table (de-de, es-es, fr-fr, it-it,
+#   "Original" = "Replacement"    ja-jp, ko-kr, pt-br, zh-tw), by its own text
+#   [en."section/scene"]          only in one scene
+#
+# A language that doesn't translate a scene string shows the English text, so
+# [en] changes reach it too. Replacements can be any length.
+#
+# To see every string:
+#   rex run --blade_extract_strings="$PWD/_tools/logs/strings.template.toml"
+#
+# The launcher lists the recomps in Games > Demos (blade_launcher.cpp), so that
+# screen is relabelled Games. These are scoped to the Games blade and its
+# screens: the Memory blade also says "Demos", for real demo content.
+
+# Games blade: the menu item and its description.
+[en."gamesbla/gamesSignedIn"]
+"Demos" = "Games"
+
+[en."gamesbla/gamesSignedOut"]
+"Demos" = "Games"
+
+[en."gamesbla/gamesMetaDemos"]
+"Try game demos! You can download demos from Xbox Live Marketplace." = "Play your recompiled Xbox 360 games."
+
+# The list screen: its title and empty-list message.
+[en."games/strings"]
+"Demos" = "Games"
+"Your game demos will be listed here. You can get new demos from Xbox Live Marketplace." = "Your games will be listed here. Add them to launcher.toml."
+
+# The options screen for a selected game.
+[en."games/405_DemoOptions"]
+"Demos" = "Games"
+"Play Demo" = "Play Game"
+"Delete Demo" = "Delete Game"
+
+# System > Console Settings > Display: Screen Format is Blade's windowed /
+# fullscreen switch for launched games (blade_display.cpp passes it as
+# --fullscreen). Scoped: "Normal" is also a visual-state name in the skins.
+[en."consoles/dashSysCslSetDisplay"]
+"Screen Format" = "Display Mode"
+"Set the screen format to match your TV. You must connect an Xbox 360 Component HD AV Cable to configure high definition display modes. When you connect this cable, your screen format will be set automatically." = "Choose whether games run in a window or fullscreen. Screen Resolution sets the window size."
+
+[en."consoles/dashSysCslSetDisplayFormat"]
+"Screen Format" = "Display Mode"
+"Normal" = "Windowed"
+"Widescreen" = "Fullscreen"
+
+[en."consoles/metaPane_DisplayNormal"]
+"Normal" = "Windowed"
+
+[en."consoles/metaPane_DisplayWidescreen"]
+"Widescreen" = "Fullscreen"
+
+[en."consoles/dashCSettingsStrings"]
+"Normal" = "Windowed"
+"Widescreen" = "Fullscreen"
