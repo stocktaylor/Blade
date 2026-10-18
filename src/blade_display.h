@@ -15,6 +15,8 @@ namespace blade {
 // saves later changes there.
 void LoadDisplaySettings(const std::filesystem::path& config_dir);
 
+#if BLADE_LAUNCHER
+
 // Replaces Display > Screen Resolution's list with window sizes. Call after
 // the XEX is loaded.
 void PatchResolutionList();
@@ -32,5 +34,7 @@ void SetDisplayChangedCallback(std::function<void(const DisplayChoice&)> callbac
 
 // Arguments for a launched game from the saved Display settings.
 std::vector<std::string> DisplayLaunchArgs();
+
+#endif  // BLADE_LAUNCHER
 
 }  // namespace blade

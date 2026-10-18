@@ -17,6 +17,9 @@
 // Display > Screen Format is XCONFIG_USER 0x0A (video flags), widescreen =
 // 0x00010000. strings.toml relabels it Windowed / Fullscreen and Blade passes
 // it as --fullscreen; it also still sets the dashboard's own 4:3 / 16:9 layout.
+//
+// The stock build (BLADE_LAUNCHER=OFF) only keeps the XConfig values; the
+// resolution list, the window and launched games are left alone.
 
 #include "blade_display.h"
 
@@ -60,18 +63,24 @@ constexpr uint32_t kWidescreenFlag = 0x00010000;  // in kVideoFlags
 struct Size {
   uint16_t width, height;
 };
+// Screen Resolution until the dashboard saves one; in both lists below.
+constexpr Size kDefaultSize = {1280, 720};
+#if BLADE_LAUNCHER
 // The dashboard's VGA list, as found in the image, and what replaces it:
 // rexlauncher's window presets plus 4K. Same count, so the table keeps its size.
 constexpr std::array<Size, 6> kDashSizes = {
     {{640, 480}, {848, 480}, {1024, 768}, {1280, 720}, {1280, 768}, {1360, 768}}};
 constexpr std::array<Size, 6> kWindowSizes = {
     {{1280, 720}, {1280, 800}, {1600, 900}, {1920, 1080}, {2560, 1440}, {3840, 2160}}};
+#endif
 
 std::mutex g_mutex;
 std::filesystem::path g_path;
 std::map<uint32_t, std::vector<uint8_t>> g_values;  // (category << 16 | setting) -> bytes
 std::set<uint32_t> g_logged_gets;  // reads are frequent: log each setting once
+#if BLADE_LAUNCHER
 std::function<void(const DisplayChoice&)> g_on_display_changed;
+#endif
 
 std::string Key(uint32_t id) {
   char buf[16];
@@ -112,7 +121,7 @@ void Save() {
 // Values Blade answers for settings the SDK doesn't know.
 bool DefaultValue(uint32_t id, std::vector<uint8_t>* out) {
   if (id == kVgaResolution) {
-    const Size& s = kWindowSizes[0];
+    const Size& s = kDefaultSize;
     *out = {uint8_t(s.width >> 8), uint8_t(s.width), uint8_t(s.height >> 8), uint8_t(s.height)};
     return true;
   }
@@ -140,6 +149,8 @@ void LoadDisplaySettings(const std::filesystem::path& config_dir) {
     REXLOG_ERROR("XConfig: {}: {}", g_path.string(), e.what());
   }
 }
+
+#if BLADE_LAUNCHER
 
 void PatchResolutionList() {
   auto module = REX_KERNEL_STATE()->GetExecutableModule();
@@ -236,6 +247,8 @@ std::vector<std::string> DisplayLaunchArgs() {
   return args;
 }
 
+#endif  // BLADE_LAUNCHER
+
 }  // namespace blade
 
 //=============================================================================
@@ -299,17 +312,23 @@ u32 BladeExSetXConfigSetting(u16 category, u16 setting, mapped_void buffer, u16 
     bytes.assign(p, p + buffer_size);
   }
   REXLOG_INFO("XConfig: set {} = {}", blade::Key(id), blade::Hex(bytes.data(), bytes.size()));
+#if BLADE_LAUNCHER
   std::function<void(const blade::DisplayChoice&)> on_changed;
+#endif
   {
     std::lock_guard lock(blade::g_mutex);
     blade::g_values[id] = std::move(bytes);
     blade::g_logged_gets.erase(id);  // log the next read of the new value
     blade::Save();
+#if BLADE_LAUNCHER
     if (id == blade::kVgaResolution || id == blade::kVideoFlags) {
       on_changed = blade::g_on_display_changed;
     }
+#endif
   }
+#if BLADE_LAUNCHER
   if (on_changed) on_changed(blade::CurrentDisplayChoice());
+#endif
   return X_STATUS_SUCCESS;
 }
 

@@ -9,5 +9,6 @@
 void BladeFuncletReturnToOwner() {}
 
 // Screen Resolution "keep the new settings?" prompt at 0x9211BD04 (see the
-// manifest). The manifest's jump_address skips it; nothing to do here.
-void BladeSkipDisplayConfirm() {}
+// manifest). Returning true takes the manifest's jump_address_on_true, which
+// skips it; the stock dashboard (BLADE_LAUNCHER=OFF) keeps it.
+bool BladeSkipDisplayConfirm() { return BLADE_LAUNCHER; }

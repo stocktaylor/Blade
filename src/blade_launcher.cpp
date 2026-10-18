@@ -337,6 +337,28 @@ const LauncherTitle* FindLauncherTitle(std::string_view id) {
   return nullptr;
 }
 
+// The keyboard as a virtual controller (rexlauncher's Controls page, F1): a
+// launched game plays with the same keys. Empty binds are left out, as an
+// empty --name= value would stop the game's command line parsing.
+namespace {
+std::vector<std::string> KeyboardLaunchArgs() {
+  if (rex::cvar::GetFlagByName("mnk_mode") != "true") {
+    return {};
+  }
+  std::vector<std::string> args{"--mnk_mode=true"};
+  for (const auto& entry : rex::cvar::GetRegistry()) {
+    if (entry.category != "Input/Keybinds/Controller") {
+      continue;
+    }
+    std::string value = entry.getter();
+    if (!value.empty()) {
+      args.push_back("--" + entry.name + "=" + value);
+    }
+  }
+  return args;
+}
+}  // namespace
+
 void LaunchTitle(const LauncherTitle& title) {
   auto self = SelfExe();
   auto dash_args = ReadSelfCmdline();
@@ -349,8 +371,11 @@ void LaunchTitle(const LauncherTitle& title) {
   std::vector<std::string> args{self.string(), kRelayFlag, title.cwd.string(),
                                 std::to_string(1 + title.args.size()), title.exe.string()};
   args.insert(args.end(), title.args.begin(), title.args.end());
-  // Display settings chosen in the dashboard come after the title's own args.
+  // Display settings chosen in the dashboard and the keyboard mapping come
+  // after the title's own args.
   auto display = DisplayLaunchArgs();
+  auto keyboard = KeyboardLaunchArgs();
+  display.insert(display.end(), keyboard.begin(), keyboard.end());
   args.insert(args.end(), display.begin(), display.end());
   args[3] = std::to_string(1 + title.args.size() + display.size());
   args.insert(args.end(), dash_args.begin(), dash_args.end());

@@ -4,7 +4,9 @@
 
 #pragma once
 
+#include <functional>
 #include <memory>
+#include <optional>
 
 #include <rex/filesystem.h>
 #include <rex/filesystem/devices/host_path_device.h>
@@ -15,8 +17,12 @@
 #include <rex/ui/windowed_app_context.h>
 
 #include "blade_display.h"
+#if BLADE_LAUNCHER
+#include <rexlauncher/launch_menu.h>
+
 #include "blade_launcher.h"
 #include "blade_strings.h"
+#endif
 
 class BladeApp : public rex::ReXApp {
  public:
@@ -28,12 +34,37 @@ class BladeApp : public rex::ReXApp {
         PPCImageConfig));
   }
 
-  // With no --game_data_root, use a "game" folder next to the executable, so a
-  // packaged build runs with just `./blade` (see rextools `rex dist`).
+  // With no --game_data_root: an "assets" or "game" folder next to the
+  // executable (a packaged build, see rextools `rex dist`), else the project's
+  // assets folder (cmake/extract_assets.cmake), so a dev build runs as is.
   void OnConfigurePaths(rex::PathConfig& paths) override {
-    if (paths.game_data_root.empty()) {
-      paths.game_data_root = rex::filesystem::GetExecutableFolder() / "game";
+    if (!paths.game_data_root.empty()) {
+      return;
     }
+    auto exe_dir = rex::filesystem::GetExecutableFolder();
+    for (const char* name : {"assets", "game"}) {
+      if (std::filesystem::exists(exe_dir / name / "default.xex")) {
+        paths.game_data_root = exe_dir / name;
+        return;
+      }
+    }
+    paths.game_data_root = BLADE_PROJECT_ASSETS_DIR;
+  }
+
+#if BLADE_LAUNCHER
+  // rexlauncher's menu, without its launch screen (the dashboard is the
+  // launcher): F1 or Back + Start opens it over the dashboard. Window size
+  // and display mode stay with the dashboard's Display settings, which also
+  // drive launched games (blade_display.cpp); the menu has the rendering
+  // options and the Controls page.
+  void OnConfigureFonts(ImFontAtlas* atlas) override { rexlauncher::ConfigureFonts(atlas); }
+
+  std::optional<rex::PathConfig> OnFinalizePaths(
+      const rex::PathConfig& defaults, std::function<void(rex::PathConfig)> resume) override {
+    (void)resume;
+    rexlauncher::ConfigureInGameMenu({.title = "Blade", .display_options = false},
+                                     defaults.config_path);
+    return defaults;
   }
 
   // Dashboard text from strings.toml: rebuilds the XUI resource sections it
@@ -42,6 +73,7 @@ class BladeApp : public rex::ReXApp {
     blade::PrepareDashStrings(game_data_root());
     blade::PatchResolutionList();
   }
+#endif
 
   // The dashboard is a flash title: it runs as \Device\Flash\dash.xex and opens
   // its companion files (gamercrd.xzp, fonts, ...) through media:, which points
@@ -55,8 +87,11 @@ class BladeApp : public rex::ReXApp {
       fs->RegisterSymbolicLink("flash:", "\\Device\\Flash");
     }
 
-    blade::LoadLauncherConfig(game_data_root());
     blade::LoadDisplaySettings(ConfigDir());
+
+#if BLADE_LAUNCHER
+    rexlauncher::EnableInGameMenu(imgui_drawer(), app_context(), runtime());
+    blade::LoadLauncherConfig(game_data_root());
 
     // Display settings also drive Blade's own window: the saved Screen
     // Resolution and Display Mode now, and each change the dashboard saves.
@@ -65,6 +100,7 @@ class BladeApp : public rex::ReXApp {
     blade::SetDisplayChangedCallback(
         [this](const blade::DisplayChoice& choice) { ApplyDisplay(choice); });
     ApplyDisplay(blade::CurrentDisplayChoice());
+#endif
   }
 
   // Where Blade's config files live: next to the executable in a packaged
@@ -75,6 +111,7 @@ class BladeApp : public rex::ReXApp {
     return std::filesystem::absolute(game_data_root()).parent_path();
   }
 
+#if BLADE_LAUNCHER
   void OnShutdown() override { blade::SetDisplayChangedCallback(nullptr); }
 
   void ApplyDisplay(const blade::DisplayChoice& choice) {
@@ -86,6 +123,7 @@ class BladeApp : public rex::ReXApp {
       if (choice.fullscreen) w->SetFullscreen(*choice.fullscreen);
     });
   }
+#endif
 
   // Override virtual hooks for customization:
   // void OnPostInitLogging() override {}

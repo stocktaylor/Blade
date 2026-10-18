@@ -5,10 +5,10 @@
 [project]
 name = "blade"
 sdk_version = "0.10.0"
-game_root = "game"
+game_root = "assets"
 
 [entrypoint]
-file_path = "game/default.xex"
+file_path = "assets/default.xex"
 out_directory_path = "generated/default"
 includes = []
 
@@ -30,12 +30,13 @@ return = true
 # a TV against a mode it can't show; Blade's window just resizes, so skip it:
 # jump to the path taken when the current size is picked again (0x9211BC74,
 # message 253, leave the screen). With a VGA AV pack the "Yes" branch of the
-# result handler (sub_9211BDF8) does nothing more than that. Implemented in
-# src/blade_hooks.cpp.
+# result handler (sub_9211BDF8) does nothing more than that. Conditional, so
+# the stock build (BLADE_LAUNCHER=OFF) keeps the prompt with the same codegen.
+# Implemented in src/blade_hooks.cpp.
 [[entrypoint.midasm_hook]]
 name = "BladeSkipDisplayConfirm"
 address = 0x9211BD04
-jump_address = 0x9211BC74
+jump_address_on_true = 0x9211BC74
 
 # Function boundaries static analysis missed (vtable-only / tail-branch-only
 # targets). Empty table = let the analyzer auto-detect the extent. Codegen
